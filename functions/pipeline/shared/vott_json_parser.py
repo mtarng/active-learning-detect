@@ -1,28 +1,26 @@
 import json
 
-# TODO: Refactor with jsonpickle?
-# Currently only used for testing...
-# returns a json representative of a tag given relevant components
-def __build_json_tag(x1, x2, y1, y2, img_width, img_height, UID, id, type, tags, name):
+def __build_frames_data(images):
+    frames = {}
+    for filename in images:
+        # TODO: Build tag data per frame if they exist already
+        frames[__get_filename_from_fullpath(filename)] = [] #list of tags
+    return frames
+
+# For download function
+def create_starting_json(images):
     return {
-        "x1": x1,
-        "x2": x2,
-        "y1": y1,
-        "y2": y2,
-        "width": img_width,
-        "height": img_height,
-        "box" : {
-            "x1": x1,
-            "x2": x2,
-            "y1": y1,
-            "y2": y2
-        },
-        "UID": UID,
-        "id": id,
-        "type": type,
-        "tags": tags,
-        "name": name
+        "frames": __build_frames_data(images),
+        "inputTags": "",  # TODO: populate classifications that exist in db already
+        "scd": False  # Required for VoTT and image processing? unknown if it's also used for video.
     }
+
+def __get_filename_from_fullpath(filename):
+    path_components = filename.split('/')
+    return path_components[-1]
+
+def __get_id_from_fullpath(fullpath):
+    return int(__get_filename_from_fullpath(fullpath).split('.')[0])
 
 # Returns a list of processed tags for a single frame
 def __create_tag_data_list(json_tag_list):
@@ -44,27 +42,7 @@ def __process_json_tag(json_tag):
         "name": json_tag["name"]
     }
 
-def __build_frames_data(images):
-    frames = {}
-    for filename in images:
-        # TODO: Build tag data per frame if they exist already
-        frames[__get_filename_from_fullpath(filename)] = [] #list of tags
-    return frames
-
-# TODO: Change return from db to have more tag data...for now input is a list of blobstore urls
-def create_starting_json(images):
-    return {
-        "frames": __build_frames_data(images),
-        "inputTags": "", # TODO: populate classifications that exist in db already
-    }
-
-def __get_filename_from_fullpath(filename):
-    path_components = filename.split('/')
-    return path_components[-1]
-
-def __get_id_from_fullpath(fullpath):
-    return int(__get_filename_from_fullpath(fullpath).split('.')[0])
-
+# For upload function
 def process_vott_json(json):
     all_frame_data = json['frames']
 
@@ -141,6 +119,31 @@ def main():
     # tag_data = __get_components_from_json_tag(output_json["frames"]["2"][0])
     # print("tag_data: ---" + str(tag_data))
     # add_tag_to_db('something', 2, (tag_data))
+
+
+
+# Currently only used for testing...
+# returns a json representative of a tag given relevant components
+def __build_json_tag(x1, x2, y1, y2, img_width, img_height, UID, id, type, tags, name):
+    return {
+        "x1": x1,
+        "x2": x2,
+        "y1": y1,
+        "y2": y2,
+        "width": img_width,
+        "height": img_height,
+        "box" : {
+            "x1": x1,
+            "x2": x2,
+            "y1": y1,
+            "y2": y2
+        },
+        "UID": UID,
+        "id": id,
+        "type": type,
+        "tags": tags,
+        "name": name
+    }
 
 if __name__ == '__main__':
     main()
