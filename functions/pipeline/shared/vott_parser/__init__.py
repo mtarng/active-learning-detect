@@ -8,7 +8,7 @@ def __build_frames_data(images):
     return frames
 
 # For download function
-def create_starting_json(images):
+def create_starting_vott_json(images):
     return {
         "frames": __build_frames_data(images),
         "inputTags": "",  # TODO: populate classifications that exist in db already
@@ -87,8 +87,8 @@ def main():
 		"4.png" : {},
 		"5.png" : {}
 	}
-    generated_json = create_starting_json(images)
-    print("generating starting default json for vott download")
+    generated_json = create_starting_vott_json(images)
+    print("generating starting default json for vott_parser download")
     print(json.dumps(generated_json))
 
     print('testing tag creation')

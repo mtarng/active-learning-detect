@@ -6,9 +6,7 @@ import random
 from enum import IntEnum, unique
 import getpass
 import itertools
-from .db_provider import DatabaseInfo, PostGresProvider
-# Uncomment below to run this file's main() to test
-# from db_provider import DatabaseInfo, PostGresProvider
+from ..db_provider import DatabaseInfo, PostGresProvider
 
 @unique
 class ImageTagState(IntEnum):

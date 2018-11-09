@@ -1,8 +1,8 @@
 import json
 
+from ..shared.vott_parser import process_vott_json
 from ..shared.db_provider import DatabaseInfo, PostGresProvider
-from ..shared.db_access_v2 import ImageTag, ImageTagDataAccess
-from ..shared import vott_json_parser as Vott_json_parser
+from ..shared.db_access.db_access_v2 import ImageTag, ImageTagDataAccess
 
 import azure.functions as func
 
@@ -17,7 +17,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
 
         vott_json = req.get_json()
-        upload_data = Vott_json_parser.process_vott_json(vott_json)
+        upload_data = process_vott_json(vott_json)
         user_id = int(req.params.get('userId'))
         upload_data['userId'] = user_id
 
