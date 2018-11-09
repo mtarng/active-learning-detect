@@ -3,7 +3,7 @@ import logging
 import azure.functions as func
 import json
 
-from ..shared import db_access as DB_Access  # To be deprecated for v2
+from ..shared import db_access_v1 as DB_Access  # To be deprecated for v2
 from ..shared.vott_parser import create_starting_vott_json
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
