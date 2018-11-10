@@ -44,7 +44,7 @@ parser = argparse.ArgumentParser(description='convert object detection results t
 parser.add_argument('--input', 
                     help='object detection log file')
 parser.add_argument('--output', 
-                    help='vott_parser json file')
+                    help='vott json file')
 args = parser.parse_args()
 
 # logfile = '/home/tinzha/Projects/Audi/object_detection/output-v2/audi_video_log.csv'

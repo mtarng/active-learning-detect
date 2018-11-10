@@ -158,7 +158,7 @@ def download_images(config, image_dir, json_resp):
 
 def write_vott_data(image_dir, json_resp):
     data_file = pathlib.Path(image_dir / "data.json")
-    # vott_data = json_resp.get("vott_parser", None)
+    # vott_data = json_resp.get("vott", None)
     vott_data = None
 
     if not vott_data:
@@ -207,7 +207,7 @@ def upload(config):
     with open(str(vott_json)) as json_file:
         json_data = json.load(json_file)
 
-    # Munge the vott_parser json file.
+    # Munge the vott json file.
     munged_json = trim_file_paths(json_data)
 
     response = requests.post(functions_url, json=munged_json)
