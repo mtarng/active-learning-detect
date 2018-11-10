@@ -14,6 +14,7 @@ def __create_ImageTag_list(image_id, tags_list):
     return image_tags
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
+    # TODO: Create if check for userId and valid json checks?
     try:
 
         vott_json = req.get_json()
@@ -21,7 +22,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         user_id = int(req.params.get('userId'))
         upload_data['userId'] = user_id
 
-        # TODO: Configure via env configs/util?
+        # TODO: Configure via env configs/util for upload/download/onboard
         # DB configuration
         db_config = DatabaseInfo("", "", "", "")
         data_access = ImageTagDataAccess(PostGresProvider(db_config))
