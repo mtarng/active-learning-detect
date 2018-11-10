@@ -76,9 +76,8 @@ class ImageTagDataAccess(object):
             conn = self._db_provider.get_connection()
             try:
                 cursor = conn.cursor()
-                # TODO: Should we add TagStateId = INCOMPLETE_TAG also for fetching images?
                 query = ("SELECT b.ImageId, b.ImageLocation, a.TagStateId FROM Image_Tagging_State a "
-                        "JOIN Image_Info b ON a.ImageId = b.ImageId WHERE a.TagStateId = 1 order by "
+                        "JOIN Image_Info b ON a.ImageId = b.ImageId WHERE a.TagStateId IN (1, 4) order by "
                         "a.createddtim DESC limit {0}")
                 cursor.execute(query.format(number_of_images))
                 for row in cursor:
