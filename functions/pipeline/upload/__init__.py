@@ -2,7 +2,7 @@ import json
 
 from ..shared.vott_parser import process_vott_json
 from ..shared.db_provider import DatabaseInfo, PostGresProvider
-from ..shared.db_access.db_access_v2 import ImageTag, ImageTagDataAccess
+from ..shared.db_access import ImageTag, ImageTagDataAccess
 
 import azure.functions as func
 
