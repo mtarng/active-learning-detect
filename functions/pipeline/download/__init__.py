@@ -4,7 +4,7 @@ import azure.functions as func
 import json
 
 from ..shared.vott_parser import create_starting_vott_json
-from ..shared.db_provider import DatabaseInfo, PostGresProvider
+from ..shared.db_provider import get_postgres_provider
 from ..shared.db_access import ImageTagDataAccess
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
@@ -30,10 +30,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             body=json.dumps({"error": "image count not specified"})
         )
     else:
-        # TODO: Configure via env configs/util for upload/download/onboard
         # DB configuration
-        db_config = DatabaseInfo("", "", "", "")
-        data_access = ImageTagDataAccess(PostGresProvider(db_config))
+        data_access = ImageTagDataAccess(get_postgres_provider())
 
         image_urls = list(data_access.get_new_images(image_count, user_id))
 

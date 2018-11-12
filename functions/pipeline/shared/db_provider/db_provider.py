@@ -1,7 +1,22 @@
 import pg8000
-
+import os
 
 # import pyodbc
+
+# Used for testing
+default_db_host = ""
+default_db_name = ""
+default_db_user = ""
+default_db_pass = ""
+
+def get_postgres_provider():
+    return PostGresProvider(__get_database_info_from_env())
+
+
+def __get_database_info_from_env():
+    return DatabaseInfo(os.getenv('DB_HOST', default_db_host), os.getenv('DB_NAME', default_db_name),
+                        os.getenv('DB_USER', default_db_user), os.getenv('DB_PASS', default_db_pass))
+
 
 class DatabaseInfo(object):
     def __init__(self, db_host_name, db_name, db_user_name, db_password):

@@ -1,7 +1,7 @@
 import json
 
 from ..shared.vott_parser import process_vott_json
-from ..shared.db_provider import DatabaseInfo, PostGresProvider
+from ..shared.db_provider import get_postgres_provider
 from ..shared.db_access import ImageTag, ImageTagDataAccess
 
 import azure.functions as func
@@ -22,10 +22,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         user_id = int(req.params.get('userId'))
         upload_data['userId'] = user_id
 
-        # TODO: Configure via env configs/util for upload/download/onboard
         # DB configuration
-        db_config = DatabaseInfo("", "", "", "")
-        data_access = ImageTagDataAccess(PostGresProvider(db_config))
+        data_access = ImageTagDataAccess(get_postgres_provider())
 
         # Update tagged images
         ids_to_tags = upload_data["imageIdToTags"]
