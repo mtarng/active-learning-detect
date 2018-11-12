@@ -11,7 +11,7 @@ from ..shared.db_access import ImageTagDataAccess
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
 
-    imageCount = int(req.params.get('imageCount'))
+    image_count = int(req.params.get('imageCount'))
     user_id = int(req.params.get('userId'))
 
     # setup response object
@@ -24,29 +24,21 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             headers=headers,
             body=json.dumps({"error": "invalid userId given or omitted"})
         )
-    elif not imageCount:
+    elif not image_count:
         return func.HttpResponse(
             status_code=400,
             headers=headers,
             body=json.dumps({"error": "image count not specified"})
         )
     else:
-        # setup response object
-        connection = DB_Access.get_connection()
-        # TODO: images need more meaningful data than just download urls
-        image_urls = DB_Access.get_images_for_tagging(connection, imageCount)
-
         # TODO: Configure via env configs/util for upload/download/onboard
         # DB configuration
         db_config = DatabaseInfo("", "", "", "")
         data_access = ImageTagDataAccess(PostGresProvider(db_config))
 
+        image_urls = list(data_access.get_new_images(image_count, user_id))
 
-
-
-
-
-
+        # TODO: change parser to accept dict, or maybe object with tagging data later...
         # TODO: Build vott starting json
         # TODO: Populate starting json with tags, if any exist... (precomputed or retagging?)
         vott_json = create_starting_vott_json(image_urls)
