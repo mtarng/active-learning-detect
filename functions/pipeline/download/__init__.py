@@ -3,7 +3,6 @@ import logging
 import azure.functions as func
 import json
 
-from ..shared import db_access_v1 as DB_Access  # To be deprecated for v2
 from ..shared.vott_parser import create_starting_vott_json
 from ..shared.db_provider import DatabaseInfo, PostGresProvider
 from ..shared.db_access import ImageTagDataAccess
