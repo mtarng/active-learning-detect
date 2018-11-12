@@ -6,6 +6,7 @@ from ..shared.db_access import ImageTag, ImageTagDataAccess
 
 import azure.functions as func
 
+
 # Create list of ImageTag objects to write to db for given image_id
 def __create_ImageTag_list(image_id, tags_list):
     image_tags = []
