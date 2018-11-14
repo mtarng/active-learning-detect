@@ -4,10 +4,10 @@ import os
 # import pyodbc
 
 # Used for testing
-default_db_host = ""
-default_db_name = ""
-default_db_user = ""
-default_db_pass = ""
+default_db_host = "abrig-db.postgres.database.azure.com"
+default_db_name = "micro"
+default_db_user = "abrigtest@abrig-db"
+default_db_pass = "abcdABCD123"
 
 def get_postgres_provider():
     return PostGresProvider(__get_database_info_from_env())

@@ -4,16 +4,7 @@ import random
 from enum import IntEnum, unique
 import getpass
 import itertools
-
-import sys
-import os
-sys.path.append("..")
-sys.path.append(os.path.abspath('db_provider'))
-
-from db_provider import DatabaseInfo, PostGresProvider
-
-# from ..db_provider import DatabaseInfo, PostGresProvider
-
+from ..db_provider import DatabaseInfo, PostGresProvider
 
 
 @unique
@@ -36,13 +27,15 @@ class ImageInfo(object):
 
 
 class ImageTag(object):
-    def __init__(self, image_id, x_min, x_max, y_min, y_max, classification_names):
-            self.image_id = image_id
-            self.x_min = x_min
-            self.x_max = x_max
-            self.y_min = y_min
-            self.y_max = y_max
-            self.classification_names = classification_names
+    def __init__(self, image_id, x_min, x_max, y_min, y_max, classification_names, image_height, image_width):
+        self.image_id = image_id
+        self.x_min = x_min
+        self.x_max = x_max
+        self.y_min = y_min
+        self.y_max = y_max
+        self.classification_names = classification_names
+        self.image_height = image_height
+        self.image_width = image_width
 
 
 class ImageTagDataAccess(object):
@@ -93,14 +86,16 @@ class ImageTagDataAccess(object):
                 cursor.execute(query.format(number_of_images, ImageTagState.READY_TO_TAG, ImageTagState.INCOMPLETE_TAG))
                 for row in cursor:
                     logging.debug('Image Id: {0} \t\tImage Name: {1} \t\tTag State: {2}'.format(row[0], row[1], row[2]))
-                    selected_images_to_tag[str(row[0])] = str(row[1])
+                    selected_images_to_tag[row[0]] = str(row[1])
                 self._update_images(selected_images_to_tag,ImageTagState.TAG_IN_PROGRESS, user_id, conn)
-            finally: cursor.close()
+            finally:
+                cursor.close()
         except Exception as e:
             logging.error("An errors occured getting images: {0}".format(e))
             raise
-        finally: conn.close()
-        return selected_images_to_tag.values()
+        finally:
+            conn.close()
+        return selected_images_to_tag
 
     def add_new_images(self,list_of_image_infos, user_id):
 
@@ -150,25 +145,34 @@ class ImageTagDataAccess(object):
                 print("Got image tags back for image_id={}".format(image_id))
                 for row in cursor:
                     # print('Image Id: {0} \t\tImage Name: {1} \t\tTag State: {2}'.format(row[0], row[1], row[2]))
-                    print(row)
+                    logging.debug(row)
                     tag_id = row[0]
                     if tag_id in tag_id_to_ImageTag:
-                        print("Existing ImageTag found, appending classification {}", row[6])
+                        logging.debug("Existing ImageTag found, appending classification {}", row[6])
                         tag_id_to_ImageTag[tag_id].classification_names.append(row[6])
                     else:
-                        print("No existing ImageTag found, creating new image_id={0} x_min={1} x_max={2} x_min={3} x_max={4} classification={5}".format(row[1], row[2], row[3], row[4], row[5], [row[6]]))
-                        tag_id_to_ImageTag[tag_id] = ImageTag(row[1], row[2], row[3], row[4], row[5], [row[6]])
+                        logging.debug("No existing ImageTag found, creating new ImageTag: "
+                              "id={0} x_min={1} x_max={2} x_min={3} x_max={4} classification={5} "
+                              "image_height={6} image_width={7}"
+                              .format(row[1], float(row[2]), float(row[3]), float(row[4]), float(row[5]),
+                                      [row[6].strip()], row[7], row[8]))
+                        tag_id_to_ImageTag[tag_id] = ImageTag(row[1], float(row[2]), float(row[3]), float(row[4]),
+                                                              float(row[5]), [row[6].strip()], row[7], row[8])
                     # TODO: Build tags and append classifications to classification lists
                     # selected_images_to_tag[str(row[0])] = str(row[1])
             finally:
                 cursor.close()
         except Exception as e:
-            print("An errors occured getting images: {0}".format(e))
+            logging.error("An errors occured getting images: {0}".format(e))
             raise
         finally:
             conn.close()
         return list(tag_id_to_ImageTag.values())
 
+    def get_existing_classifications(self):
+        # TODO: Implement this
+        print("Implement me")
+        return ""
 
     def update_incomplete_images(self, list_of_image_ids, user_id):
         #TODO: Make sure the image ids are in a TAG_IN_PROGRESS state
@@ -279,6 +283,12 @@ def main():
     #   Onboarding of new images
     #   Checking in images been tagged
     #################################################################
+
+    # import sys
+    # import os
+    # sys.path.append("..")
+    # sys.path.append(os.path.abspath('db_provider'))
+    # from db_provider import DatabaseInfo, PostGresProvider
 
     #Replace me for testing
     # db_config = DatabaseInfo("","","","")
