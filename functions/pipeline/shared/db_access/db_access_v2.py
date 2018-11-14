@@ -1,14 +1,20 @@
-# import sys
 import string
-# import os
-# import time
 import logging
 import random
 from enum import IntEnum, unique
 import getpass
 import itertools
 
-from ..db_provider import DatabaseInfo, PostGresProvider
+import sys
+import os
+sys.path.append("..")
+sys.path.append(os.path.abspath('db_provider'))
+
+from db_provider import DatabaseInfo, PostGresProvider
+
+# from ..db_provider import DatabaseInfo, PostGresProvider
+
+
 
 @unique
 class ImageTagState(IntEnum):
@@ -19,6 +25,7 @@ class ImageTagState(IntEnum):
     INCOMPLETE_TAG = 4
     ABANDONED = 5
 
+
 # An entity class for a VOTT image
 class ImageInfo(object):
     def __init__(self, image_name, image_location, height, width):
@@ -26,6 +33,7 @@ class ImageInfo(object):
         self.image_location = image_location
         self.height = height
         self.width = width
+
 
 class ImageTag(object):
     def __init__(self, image_id, x_min, x_max, y_min, y_max, classification_names):
@@ -35,6 +43,7 @@ class ImageTag(object):
             self.y_min = y_min
             self.y_max = y_max
             self.classification_names = classification_names
+
 
 class ImageTagDataAccess(object):
     def __init__(self,  db_provider):
@@ -118,6 +127,40 @@ class ImageTagDataAccess(object):
                 raise
             finally: conn.close()
         return url_to_image_id_map
+
+    def get_image_tags(self, image_id):
+        if type(image_id) is not int:
+            raise TypeError('image_id must be an integer')
+
+        try:
+            conn = self._db_provider.get_connection()
+            try:
+                cursor = conn.cursor()
+                query = ("SELECT image_tags.imagetagid, image_info.imageid, x_min, x_max, y_min, y_max, "
+                         "classification_info.classificationname, image_info.height, image_info.width "
+                            "FROM image_tags "
+                                "inner join tags_classification on image_tags.imagetagid = tags_classification.imagetagid "
+                                "inner join classification_info on tags_classification.classificationid = classification_info.classificationid "
+                                "inner join image_info on image_info.imageid = image_tags.imageid "
+                            "WHERE image_tags.imageid = {0};")
+                cursor.execute(query.format(image_id,))
+
+                tag_id_to_tag_data = {}
+
+                for row in cursor:
+                    # print('Image Id: {0} \t\tImage Name: {1} \t\tTag State: {2}'.format(row[0], row[1], row[2]))
+                    print(row)
+                    # TODO: Build tags and append classifications to classification lists
+                    # selected_images_to_tag[str(row[0])] = str(row[1])
+            finally:
+                cursor.close()
+        except Exception as e:
+            print("An errors occured getting images: {0}".format(e))
+            raise
+        finally:
+            conn.close()
+        return tag_id_to_tag_data.values()
+
 
     def update_incomplete_images(self, list_of_image_ids, user_id):
         #TODO: Make sure the image ids are in a TAG_IN_PROGRESS state
@@ -230,16 +273,21 @@ def main():
     #################################################################
 
     #Replace me for testing
-    db_config = DatabaseInfo("","","","")
+    # db_config = DatabaseInfo("","","","")
+    db_config = DatabaseInfo("abrig-db.postgres.database.azure.com", "micro", "abrigtest@abrig-db", "abcdABCD123")
     data_access = ImageTagDataAccess(PostGresProvider(db_config))
     user_id = data_access.create_user(getpass.getuser())
     logging.info("The user id for '{0}' is {1}".format(getpass.getuser(),user_id))
 
-    list_of_image_infos = generate_test_image_infos(5)
-    url_to_image_id_map = data_access.add_new_images(list_of_image_infos,user_id)
+    # list_of_image_infos = generate_test_image_infos(5)
+    # url_to_image_id_map = data_access.add_new_images(list_of_image_infos,user_id)
+    #
+    # image_tags = generate_test_image_tags(list(url_to_image_id_map.values()),4,4)
+    # data_access.update_tagged_images(image_tags,user_id)
 
-    image_tags = generate_test_image_tags(list(url_to_image_id_map.values()),4,4)
-    data_access.update_tagged_images(image_tags,user_id)
+    image_id = 5
+    print("Getting tags for imageId={}.".format(image_id))
+    data_access.get_image_tags(image_id)
 
 TestClassifications = ("maine coon","german shephard","goldfinch","mackerel"," african elephant","rattlesnake")
 
