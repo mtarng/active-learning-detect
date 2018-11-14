@@ -35,12 +35,22 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             # DB configuration
             data_access = ImageTagDataAccess(get_postgres_provider())
             user_id = data_access.create_user(user_name)
-            image_urls = list(data_access.get_new_images(image_count, user_id))
+            image_id_to_urls = data_access.get_new_images(image_count, user_id)
+            image_urls = list(image_id_to_urls.values())
 
-            # TODO: Populate starting json with tags, if any exist... (precomputed or retagging?)
-            vott_json = create_starting_vott_json(image_urls)
+            image_id_to_image_tags = {}
+            for image_id in image_id_to_urls.keys():
+                image_id_to_image_tags[image_id] = data_access.get_image_tags(image_id)
 
-            return_body_json = {"imageUrls": image_urls, "vottJson": vott_json}
+            # TODO: populate classifications that exist in db already
+            existing_classifications_list = data_access.get_existing_classifications()
+
+            vott_json = create_starting_vott_json(image_id_to_urls, image_id_to_image_tags, existing_classifications_list)
+
+            return_body_json = {"imageUrls": image_urls,
+                                "vottJson": vott_json}
+            # return_body_json = {"imageUrls": image_urls,
+            #                     "imageIds": list(image_id_to_urls.keys())}
 
             content = json.dumps(return_body_json)
             return func.HttpResponse(
