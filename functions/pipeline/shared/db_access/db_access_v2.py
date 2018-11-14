@@ -145,11 +145,19 @@ class ImageTagDataAccess(object):
                             "WHERE image_tags.imageid = {0};")
                 cursor.execute(query.format(image_id,))
 
-                tag_id_to_tag_data = {}
+                tag_id_to_ImageTag = {}
 
+                print("Got image tags back for image_id={}".format(image_id))
                 for row in cursor:
                     # print('Image Id: {0} \t\tImage Name: {1} \t\tTag State: {2}'.format(row[0], row[1], row[2]))
                     print(row)
+                    tag_id = row[0]
+                    if tag_id in tag_id_to_ImageTag:
+                        print("Existing ImageTag found, appending classification {}", row[6])
+                        tag_id_to_ImageTag[tag_id].classification_names.append(row[6])
+                    else:
+                        print("No existing ImageTag found, creating new image_id={0} x_min={1} x_max={2} x_min={3} x_max={4} classification={5}".format(row[1], row[2], row[3], row[4], row[5], [row[6]]))
+                        tag_id_to_ImageTag[tag_id] = ImageTag(row[1], row[2], row[3], row[4], row[5], [row[6]])
                     # TODO: Build tags and append classifications to classification lists
                     # selected_images_to_tag[str(row[0])] = str(row[1])
             finally:
@@ -159,7 +167,7 @@ class ImageTagDataAccess(object):
             raise
         finally:
             conn.close()
-        return tag_id_to_tag_data.values()
+        return list(tag_id_to_ImageTag.values())
 
 
     def update_incomplete_images(self, list_of_image_ids, user_id):
@@ -287,7 +295,16 @@ def main():
 
     image_id = 5
     print("Getting tags for imageId={}.".format(image_id))
-    data_access.get_image_tags(image_id)
+    image_tags = data_access.get_image_tags(image_id)
+    print("Got back {} tags".format(len(image_tags)))
+    for image_tag in image_tags:
+        print(image_tag.image_id)
+        print(image_tag.x_min)
+        print(image_tag.x_max)
+        print(image_tag.y_min)
+        print(image_tag.y_max)
+        print(image_tag.classification_names)
+
 
 TestClassifications = ("maine coon","german shephard","goldfinch","mackerel"," african elephant","rattlesnake")
 
