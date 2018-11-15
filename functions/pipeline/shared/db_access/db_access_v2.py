@@ -143,12 +143,11 @@ class ImageTagDataAccess(object):
 
                 print("Got image tags back for image_id={}".format(image_id))
                 for row in cursor:
-                    # print('Image Id: {0} \t\tImage Name: {1} \t\tTag State: {2}'.format(row[0], row[1], row[2]))
                     print(row)
                     tag_id = row[0]
                     if tag_id in tag_id_to_ImageTag:
                         print("Existing ImageTag found, appending classification {}", row[6])
-                        tag_id_to_ImageTag[tag_id].classification_names.append(row[6])
+                        tag_id_to_ImageTag[tag_id].classification_names.append(row[6].strip())
                     else:
                         print("No existing ImageTag found, creating new ImageTag: "
                               "id={0} x_min={1} x_max={2} x_min={3} x_max={4} classification={5} "
@@ -157,21 +156,36 @@ class ImageTagDataAccess(object):
                                       [row[6].strip()], row[7], row[8]))
                         tag_id_to_ImageTag[tag_id] = ImageTag(row[1], float(row[2]), float(row[3]), float(row[4]),
                                                               float(row[5]), [row[6].strip()], row[7], row[8])
-                    # TODO: Build tags and append classifications to classification lists
-                    # selected_images_to_tag[str(row[0])] = str(row[1])
             finally:
                 cursor.close()
         except Exception as e:
-            print("An errors occured getting images: {0}".format(e))
+            print("An error occurred getting image tags: {0}".format(e))
             raise
         finally:
             conn.close()
         return list(tag_id_to_ImageTag.values())
 
     def get_existing_classifications(self):
-        # TODO: Implement this
-        print("Implement me")
-        return ""
+        try:
+            conn = self._db_provider.get_connection()
+            try:
+                cursor = conn.cursor()
+                query = "SELECT classificationname from classification_info order by classificationname asc"
+                cursor.execute(query)
+
+                classification_set = set()
+                for row in cursor:
+                    print(row)
+                    classification_set.add(row[0])
+                print("Got back {} classifications existing in db.".format(len(classification_set)))
+            finally:
+                cursor.close()
+        except Exception as e:
+            print("An error occurred getting classifications from DB: {0}".format(e))
+            raise
+        finally:
+            conn.close()
+        return list(classification_set)
 
     def update_incomplete_images(self, list_of_image_ids, user_id):
         #TODO: Make sure the image ids are in a TAG_IN_PROGRESS state
