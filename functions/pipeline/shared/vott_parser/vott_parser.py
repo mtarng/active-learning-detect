@@ -37,7 +37,7 @@ def create_starting_vott_json(image_id_to_urls, image_id_to_image_tags, existing
     # "inputTags"
     classification_str = ""
     for classification in existing_classifications_list:
-        classification_str += classification
+        classification_str += classification + ","
 
     return {
         "frames": frame_to_tag_list_map,
