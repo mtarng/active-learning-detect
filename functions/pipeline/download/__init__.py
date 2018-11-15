@@ -42,15 +42,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             for image_id in image_id_to_urls.keys():
                 image_id_to_image_tags[image_id] = data_access.get_image_tags(image_id)
 
-            # TODO: populate classifications that exist in db already
             existing_classifications_list = data_access.get_existing_classifications()
 
             vott_json = create_starting_vott_json(image_id_to_urls, image_id_to_image_tags, existing_classifications_list)
 
             return_body_json = {"imageUrls": image_urls,
                                 "vottJson": vott_json}
-            # return_body_json = {"imageUrls": image_urls,
-            #                     "imageIds": list(image_id_to_urls.keys())}
 
             content = json.dumps(return_body_json)
             return func.HttpResponse(
