@@ -304,32 +304,20 @@ def main():
     # from db_provider import DatabaseInfo, PostGresProvider
 
     #Replace me for testing
-    # db_config = DatabaseInfo("","","","")
-    db_config = DatabaseInfo("abrig-db.postgres.database.azure.com", "micro", "abrigtest@abrig-db", "abcdABCD123")
+    db_config = DatabaseInfo("","","","")
     data_access = ImageTagDataAccess(PostGresProvider(db_config))
     user_id = data_access.create_user(getpass.getuser())
     print("The user id for '{0}' is {1}".format(getpass.getuser(),user_id))
 
-    # list_of_image_infos = generate_test_image_infos(5)
-    # url_to_image_id_map = data_access.add_new_images(list_of_image_infos,user_id)
-    #
-    # image_tags = generate_test_image_tags(list(url_to_image_id_map.values()),4,4)
-    # data_access.update_tagged_images(image_tags,user_id)
+    list_of_image_infos = generate_test_image_infos(5)
+    url_to_image_id_map = data_access.add_new_images(list_of_image_infos,user_id)
 
-    image_id = 5
-    print("Getting tags for imageId={}.".format(image_id))
-    image_tags = data_access.get_image_tags(image_id)
-    print("Got back {} tags".format(len(image_tags)))
-    for image_tag in image_tags:
-        print(image_tag.image_id)
-        print(image_tag.x_min)
-        print(image_tag.x_max)
-        print(image_tag.y_min)
-        print(image_tag.y_max)
-        print(image_tag.classification_names)
+    image_tags = generate_test_image_tags(list(url_to_image_id_map.values()),4,4)
+    data_access.update_tagged_images(image_tags,user_id)
 
 
-TestClassifications = ("maine coon","german shephard","goldfinch","mackerel"," african elephant","rattlesnake")
+TestClassifications = ("maine coon","german shephard","goldfinch","mackerel","african elephant","rattlesnake")
+
 
 def generate_test_image_infos(count):
     list_of_image_infos = []
