@@ -1,7 +1,7 @@
 import json
 
 
-def __build_tag_from_ImageTag(image_tag):
+def __build_tag_from_VottImageTag(image_tag):
     return {
         "x1": image_tag.x_min,
         "x2": image_tag.x_max,
@@ -13,18 +13,18 @@ def __build_tag_from_ImageTag(image_tag):
     }
 
 
-def __build_tag_list_from_ImageTags(image_tag_list):
+def __build_tag_list_from_VottImageTags(image_tag_list):
     tag_list = []
     for image_tag in image_tag_list:
-        tag_list.append(__build_tag_from_ImageTag(image_tag))
+        tag_list.append(__build_tag_from_VottImageTag(image_tag))
     return tag_list
 
 
 def __build_frames_data(image_id_to_urls, image_id_to_image_tags):
-    frames={}
+    frames = {}
     for image_id in image_id_to_image_tags.keys():
         image_file_name = __get_filename_from_fullpath(image_id_to_urls[image_id])
-        image_tags = __build_tag_list_from_ImageTags(image_id_to_image_tags[image_id])
+        image_tags = __build_tag_list_from_VottImageTags(image_id_to_image_tags[image_id])
         frames[image_file_name] = image_tags
     return frames
 

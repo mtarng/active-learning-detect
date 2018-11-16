@@ -26,14 +26,21 @@ class ImageInfo(object):
         self.width = width
 
 
+# Entity class for Tags stored in DB
 class ImageTag(object):
-    def __init__(self, image_id, x_min, x_max, y_min, y_max, classification_names, image_height, image_width):
+    def __init__(self, image_id, x_min, x_max, y_min, y_max, classification_names):
         self.image_id = image_id
         self.x_min = x_min
         self.x_max = x_max
         self.y_min = y_min
         self.y_max = y_max
         self.classification_names = classification_names
+
+
+# Vott tags have image height & width data as well.
+class VottImageTag(ImageTag):
+    def __init__(self, image_id, x_min, x_max, y_min, y_max, classification_names, image_height, image_width):
+        super().__init__(image_id, x_min, x_max, y_min, y_max, classification_names)
         self.image_height = image_height
         self.image_width = image_width
 
@@ -165,31 +172,41 @@ class ImageTagDataAccess(object):
                             "WHERE image_tags.imageid = {0};")
                 cursor.execute(query.format(image_id,))
 
-                tag_id_to_ImageTag = {}
-
                 logging.debug("Got image tags back for image_id={}".format(image_id))
-                for row in cursor:
-                    logging.debug(row)
-                    tag_id = row[0]
-                    if tag_id in tag_id_to_ImageTag:
-                        logging.debug("Existing ImageTag found, appending classification {}", row[6])
-                        tag_id_to_ImageTag[tag_id].classification_names.append(row[6].strip())
-                    else:
-                        logging.debug("No existing ImageTag found, creating new ImageTag: "
-                              "id={0} x_min={1} x_max={2} x_min={3} x_max={4} classification={5} "
-                              "image_height={6} image_width={7}"
-                              .format(row[1], float(row[2]), float(row[3]), float(row[4]), float(row[5]),
-                                      [row[6].strip()], row[7], row[8]))
-                        tag_id_to_ImageTag[tag_id] = ImageTag(row[1], float(row[2]), float(row[3]), float(row[4]),
-                                                              float(row[5]), [row[6].strip()], row[7], row[8])
+                tag_id_to_VottImageTag = self.__build_id_to_VottImageTag(cursor)
+
             finally:
                 cursor.close()
         except Exception as e:
-            logging.error("An errors occured getting images: {0}".format(e))
+            logging.error("An error occurred getting image tags for image id = {0}: {1}".format(image_id, e))
             raise
         finally:
             conn.close()
-        return list(tag_id_to_ImageTag.values())
+        return list(tag_id_to_VottImageTag.values())
+
+    def __build_id_to_VottImageTag(self, tag_db_cursor):
+        tag_id_to_VottImageTag = {}
+        try :
+            for row in tag_db_cursor:
+                logging.debug(row)
+                tag_id = row[0]
+                if tag_id in tag_id_to_VottImageTag:
+                    logging.debug("Existing ImageTag found, appending classification {}", row[6])
+                    tag_id_to_VottImageTag[tag_id].classification_names.append(row[6].strip())
+                else:
+                    logging.debug("No existing ImageTag found, creating new ImageTag: "
+                                  "id={0} x_min={1} x_max={2} x_min={3} x_max={4} classification={5} "
+                                  "image_height={6} image_width={7}"
+                                  .format(row[1], float(row[2]), float(row[3]), float(row[4]), float(row[5]),
+                                          [row[6].strip()], row[7], row[8]))
+                    tag_id_to_VottImageTag[tag_id] = VottImageTag(row[1], float(row[2]), float(row[3]),
+                                                                  float(row[4]), float(row[5]), [row[6].strip()],
+                                                                  row[7], row[8])
+        except Exception as e:
+            logging.error("An error occurred building VottImageTag dict: {0}".format(e))
+            raise
+        return tag_id_to_VottImageTag
+
 
     def get_existing_classifications(self):
         try:
@@ -203,7 +220,7 @@ class ImageTagDataAccess(object):
                 for row in cursor:
                     logging.debug(row)
                     classification_set.add(row[0])
-                logging.debug("Got back {} classifications existing in db.".format(len(classification_set)))
+                logging.debug("Got back {0} classifications existing in db.".format(len(classification_set)))
             finally:
                 cursor.close()
         except Exception as e:
