@@ -137,12 +137,12 @@ class ImageTagDataAccess(object):
                         "a.createddtim DESC limit {0}")
                 cursor.execute(query.format(number_of_images, ImageTagState.COMPLETED_TAG))
                 for row in cursor:
-                    print('Image Id: {0} \t\tImage Name: {1} \t\tTag State: {2}'.format(row[0], row[1], row[2]))
+                    logging.debug('Image Id: {0} \t\tImage Name: {1} \t\tTag State: {2}'.format(row[0], row[1], row[2]))
                     tag_complete_images[row[0]] = str(row[1])
             finally:
                 cursor.close()
         except Exception as e:
-            print("An errors occured getting images: {0}".format(e))
+            logging.error("An errors occured getting images: {0}".format(e))
             raise
         finally:
             conn.close()
@@ -167,7 +167,7 @@ class ImageTagDataAccess(object):
 
                 tag_id_to_ImageTag = {}
 
-                print("Got image tags back for image_id={}".format(image_id))
+                logging.debug("Got image tags back for image_id={}".format(image_id))
                 for row in cursor:
                     logging.debug(row)
                     tag_id = row[0]
@@ -201,13 +201,13 @@ class ImageTagDataAccess(object):
 
                 classification_set = set()
                 for row in cursor:
-                    print(row)
+                    logging.debug(row)
                     classification_set.add(row[0])
-                print("Got back {} classifications existing in db.".format(len(classification_set)))
+                logging.debug("Got back {} classifications existing in db.".format(len(classification_set)))
             finally:
                 cursor.close()
         except Exception as e:
-            print("An error occurred getting classifications from DB: {0}".format(e))
+            logging.error("An error occurred getting classifications from DB: {0}".format(e))
             raise
         finally:
             conn.close()
