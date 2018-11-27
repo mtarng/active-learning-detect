@@ -45,7 +45,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
         blob_list = []
         for blob_object in blob_service.list_blobs(storage_container):
-            blob_list.append(blob_object.name)
+            blob_list.append(blob_service.make_blob_url(storage_container, blob_object.name))
         return func.HttpResponse(
             status_code=200,
             headers=DEFAULT_RETURN_HEADER,
