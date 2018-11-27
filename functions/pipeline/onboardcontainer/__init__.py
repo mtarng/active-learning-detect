@@ -28,6 +28,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         storage_account = req_body["storageAccount"]
         storage_account_key = req_body["storageAccountKey"]
         storage_container = req_body["storageContainer"]
+
+        # TODO: Onboard queue should live in perm storage account. (may not be the same as the temp storage data)
+        # TODO: Set on env vars
         onboard_queue = req_body["onboardQueue"]
     except ValueError:
         return func.HttpResponse("ERROR: Unable to decode POST body", status_code=400)
@@ -44,7 +47,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     blob_service = BlockBlobService(account_name=storage_account,
                                     account_key=storage_account_key)
 
-    queue_service = QueueService(account_name=storage_account, account_key=storage_account_key)
+    # queue_service = QueueService(account_name=storage_account, account_key=storage_account_key)
+    queue_service = QueueService(account_name=os.getenv('STORAGE_ACCOUNT_NAME'),
+                                 account_key=os.getenv('STORAGE_ACCOUNT_KEY'))
 
     try:
         blob_list = []
