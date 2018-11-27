@@ -1,12 +1,13 @@
 {
   "scriptFile": "__init__.py",
+  "disabled": false,
   "bindings": [
     {
-      "name": "msg",
       "type": "queueTrigger",
       "direction": "in",
+      "name": "msg",
       "queueName": "onboard-queue",
-      "connection": "STORAGE_QUEUE_CONNECTION"
+      "connection": "STORAGE_QUEUE_CONNECTION",
     }
   ]
 }

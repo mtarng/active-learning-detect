@@ -1,6 +1,7 @@
 import os
 import logging
 import json
+import base64
 import azure.functions as func
 
 from azure.storage.blob import BlockBlobService
@@ -28,14 +29,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         storage_account = req_body["storageAccount"]
         storage_account_key = req_body["storageAccountKey"]
         storage_container = req_body["storageContainer"]
-
-        # TODO: Onboard queue should live in perm storage account. (may not be the same as the temp storage data)
-        # TODO: Set on env vars
-        onboard_queue = req_body["onboardQueue"]
     except ValueError:
         return func.HttpResponse("ERROR: Unable to decode POST body", status_code=400)
 
-    if not storage_container or not storage_account or not storage_account_key or not onboard_queue:
+    if not storage_container or not storage_account or not storage_account_key:
         return func.HttpResponse("ERROR: storage container/account/key/queue not specified.", status_code=401)
 
     # TODO: Get list of all items inside storage_container
@@ -48,6 +45,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                                     account_key=storage_account_key)
 
     # queue_service = QueueService(account_name=storage_account, account_key=storage_account_key)
+    onboard_queue = "onboard-queue"
     queue_service = QueueService(account_name=os.getenv('STORAGE_ACCOUNT_NAME'),
                                  account_key=os.getenv('STORAGE_ACCOUNT_KEY'))
 
@@ -57,7 +55,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             blob_list.append(blob_service.make_blob_url(storage_container, blob_object.name))
 
         for image_url in blob_list:
-            queue_service.put_message(onboard_queue, image_url)
+            msg_body = {
+                "imageUrl": image_url,
+                "userName": user_name
+            }
+            queue_service.put_message(onboard_queue, base64.encode(json.dumps(msg_body)))
 
         return func.HttpResponse(
             status_code=200,
