@@ -9,7 +9,6 @@ from urllib.request import urlopen
 from PIL import Image
 from ..shared.db_provider import get_postgres_provider
 from ..shared.db_access import ImageTagDataAccess, ImageInfo
-from ..shared.onboarding import copy_images_to_permanent_storage
 from azure.storage.blob import BlockBlobService
 
 
@@ -17,7 +16,7 @@ def main(msg: func.QueueMessage) -> None:
     logging.info('Python queue trigger function processed a queue item: %s',
                  msg.get_body().decode('utf-8'))
 
-    result = json.dumps({
+    queue_msg = json.dumps({
         'id': msg.id,
         'body': msg.get_body().decode('utf-8'),
         'expiration_time': (msg.expiration_time.isoformat()
@@ -30,13 +29,14 @@ def main(msg: func.QueueMessage) -> None:
         'dequeue_count': msg.dequeue_count
     })
 
-    logging.info(result)
+    logging.debug(queue_msg)
 
     try:
         msg_json = json.loads(msg.get_body().decode('utf-8'))
         img_url = urllib.parse.quote(msg_json["imageUrl"], safe=':/')
         user_name = msg_json["userName"]
 
+        # TODO: move into function method and support list of urls for batch processing.
         image_object_list = []
         # Split original image name from URL
         original_filename = img_url.split("/")[-1]
@@ -63,20 +63,17 @@ def main(msg: func.QueueMessage) -> None:
 
         # Copy images to permanent storage and get a dictionary of images for which to update URLs in DB.
         # and a list of failures.  If the list of failures contains any items, return a status code other than 200.
-        # TODO: image-id and image size here.
 
-        image_id = list(image_id_url_map.values())[0] # TODO: This is hacky as hell.
-        new_blob_name = str(image_id) + ".png" # TODO: this is also hacky and needs to be corrected
+        file_extension = os.path.splitext(img_url)[1]
+        image_id = list(image_id_url_map.values())[0]  # TODO: Fix once we have a list of urls.
+        new_blob_name = (str(image_id) + file_extension)
 
         response = urlopen(img_url)
 
-        # response.status == 200
-        imagebytes = response.read()
+        image_bytes = response.read()
 
-        blob_create_response = blob_service.create_blob_from_bytes(copy_destination, new_blob_name, imagebytes)
-        update_urls_dictionary = {}
-        update_urls_dictionary[image_id] = blob_service.make_blob_url(copy_destination, new_blob_name)
-
+        blob_create_response = blob_service.create_blob_from_bytes(copy_destination, new_blob_name, image_bytes)
+        update_urls_dictionary = {image_id: blob_service.make_blob_url(copy_destination, new_blob_name)}
 
         # Otherwise, dictionary contains permanent image URLs for each image ID that was successfully copied.
         if not blob_create_response:
