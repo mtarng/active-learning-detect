@@ -2,8 +2,10 @@ import os
 import json
 import logging
 import azure.functions as func
+import urllib.parse
 
 from urllib.request import urlopen
+
 from PIL import Image
 from ..shared.db_provider import get_postgres_provider
 from ..shared.db_access import ImageTagDataAccess, ImageInfo
@@ -32,9 +34,20 @@ def main(msg: func.QueueMessage) -> None:
 
     try:
         msg_json = json.loads(msg.get_body().decode('utf-8'))
-        img_url = msg_json["imageUrl"]
+        img_url = urllib.parse.quote(msg_json["imageUrl"], safe=':/')
         user_name = msg_json["userName"]
-        image_object_list = build_objects_from_url(img_url)
+
+        image_object_list = []
+        # Split original image name from URL
+        original_filename = img_url.split("/")[-1]
+        # Create ImageInfo object (def in db_access.py)
+
+        with Image.open(urlopen(img_url)) as img:
+            width, height = img.size
+
+        image = ImageInfo(original_filename, img_url, height, width)
+        # Append image object to the list
+        image_object_list.append(image)
 
         data_access = ImageTagDataAccess(get_postgres_provider())
         user_id = data_access.create_user(user_name)
@@ -51,15 +64,19 @@ def main(msg: func.QueueMessage) -> None:
         # Copy images to permanent storage and get a dictionary of images for which to update URLs in DB.
         # and a list of failures.  If the list of failures contains any items, return a status code other than 200.
         # TODO: image-id and image size here.
-        image_id = image_id_url_map.values()[0]
-        new_blob_name = image_id + ".png"
+
+        image_id = list(image_id_url_map.values())[0] # TODO: This is hacky as hell.
+        new_blob_name = str(image_id) + ".png" # TODO: this is also hacky and needs to be corrected
 
         response = urlopen(img_url)
+
         # response.status == 200
         imagebytes = response.read()
 
         blob_create_response = blob_service.create_blob_from_bytes(copy_destination, new_blob_name, imagebytes)
-        update_urls_dictionary = {image_id: blob_service.make_blob_url(copy_destination, new_blob_name)}
+        update_urls_dictionary = {}
+        update_urls_dictionary[image_id] = blob_service.make_blob_url(copy_destination, new_blob_name)
+
 
         # Otherwise, dictionary contains permanent image URLs for each image ID that was successfully copied.
         if not blob_create_response:
@@ -72,18 +89,3 @@ def main(msg: func.QueueMessage) -> None:
             logging.debug("success onboarding.")
     except Exception as e:
         logging.error("Exception: " + str(e))
-
-
-# Given a list of image URL's, build an ImageInfo object for each, and return a list of these image objects.
-def build_objects_from_url(image_url):
-    image_object_list = []
-    # Split original image name from URL
-    original_filename = image_url.split("/")[-1]
-    # Create ImageInfo object (def in db_access.py)
-
-    with Image.open(urlopen(image_url)) as img:
-        width, height = img.size
-    image = ImageInfo(original_filename, image_url, height, width)
-    # Append image object to the list
-    image_object_list.append(image)
-    return image_object_list
