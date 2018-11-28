@@ -6,7 +6,7 @@
       "type": "queueTrigger",
       "direction": "in",
       "name": "msg",
-      "queueName": "onboard-queue",
+      "queueName": "onboardqueue",
       "connection": "STORAGE_CONNECTION_STRING",
     }
   ]

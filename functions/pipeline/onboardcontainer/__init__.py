@@ -54,7 +54,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             }
             body_str = json.dumps(msg_body)
 
-            queue_service.put_message("onboard-queue", body_str)
+            queue_service.put_message("onboardqueue", body_str)
 
         return func.HttpResponse(
             status_code=200,
