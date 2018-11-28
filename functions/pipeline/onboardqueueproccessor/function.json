@@ -7,7 +7,7 @@
       "direction": "in",
       "name": "msg",
       "queueName": "onboard-queue",
-      "connection": "STORAGE_QUEUE_CONNECTION",
+      "connection": "STORAGE_CONNECTION_STRING",
     }
   ]
 }
