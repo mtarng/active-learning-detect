@@ -31,21 +31,17 @@ def main(msg: func.QueueMessage) -> None:
     logging.info(result)
 
     try:
-        # TODO: Change message to json with img-url and userName.
-        img_url = msg.get_body().decode('utf-8')
+        msg_json = json.loads(msg.get_body().decode('utf-8'))
+        img_url = msg_json["imageUrl"]
+        user_name = msg_json["userName"]
         image_object_list = build_objects_from_url(img_url)
-    except Exception as e:
-        logging.error("ERROR: Could not build image object list. Exception: " + str(e))
 
-    try:
         data_access = ImageTagDataAccess(get_postgres_provider())
-        # TODO: Add username to queue message and consume
-        user_id = data_access.create_user("queueuser")
+        user_id = data_access.create_user(user_name)
 
         logging.debug("Add new images to the database, and retrieve a dictionary ImageId's mapped to ImageUrl's")
         image_id_url_map = data_access.add_new_images(image_object_list, user_id)
 
-        copy_source = os.getenv('SOURCE_CONTAINER_NAME')
         copy_destination = os.getenv('DESTINATION_CONTAINER_NAME')
 
         # Create blob service for storage account
@@ -53,14 +49,20 @@ def main(msg: func.QueueMessage) -> None:
                                         account_key=os.getenv('STORAGE_ACCOUNT_KEY'))
 
         # Copy images to permanent storage and get a dictionary of images for which to update URLs in DB.
-        # TODO: Prefer to have this function return a JSON blob as a string containing a list of successes
         # and a list of failures.  If the list of failures contains any items, return a status code other than 200.
-        update_urls_dictionary = copy_images_to_permanent_storage(image_id_url_map, copy_source, copy_destination,
-                                                                  blob_service)
+        # TODO: image-id and image size here.
+        image_id = image_id_url_map.values()[0]
+        new_blob_name = image_id + ".png"
 
-        # If the dictionary of images is empty, this means a faiure occurred in a copy/delete operation.
+        response = urlopen(img_url)
+        # response.status == 200
+        imagebytes = response.read()
+
+        blob_create_response = blob_service.create_blob_from_bytes(copy_destination, new_blob_name, imagebytes)
+        update_urls_dictionary = {image_id: blob_service.make_blob_url(copy_destination, new_blob_name)}
+
         # Otherwise, dictionary contains permanent image URLs for each image ID that was successfully copied.
-        if not update_urls_dictionary:
+        if not blob_create_response:
             logging.error("ERROR: Image copy/delete operation failed. Check state of images in storage.")
         else:
             logging.debug("Now updating permanent URLs in the DB...")

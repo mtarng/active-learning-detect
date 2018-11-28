@@ -5,7 +5,7 @@ import base64
 import azure.functions as func
 
 from azure.storage.blob import BlockBlobService
-from azure.storage.queue import QueueService
+from azure.storage.queue import QueueService, QueueMessageFormat
 DEFAULT_RETURN_HEADER= { "content-type": "application/json"}
 
 
@@ -45,9 +45,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                                     account_key=storage_account_key)
 
     # queue_service = QueueService(account_name=storage_account, account_key=storage_account_key)
-    onboard_queue = "onboard-queue"
-    queue_service = QueueService(account_name=os.getenv('STORAGE_ACCOUNT_NAME'),
-                                 account_key=os.getenv('STORAGE_ACCOUNT_KEY'))
+    # queue_service = QueueService(account_name=os.getenv('STORAGE_ACCOUNT_NAME'),
+    #                              account_key=os.getenv('STORAGE_ACCOUNT_KEY'))
+
+    queue_service = QueueService(account_name="cmhackstoragemtarng",
+                                 account_key="n42a9EQImk+QN90kORMyaeA6w/ipmLyHY0DCpJbeY9tMmmA1cGUOwkoYRl4F+r9vIoexBjh3YEuRTodQCcsQrA==")
+    queue_service.encode_function = QueueMessageFormat.text_base64encode
 
     try:
         blob_list = []
@@ -59,7 +62,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "imageUrl": image_url,
                 "userName": user_name
             }
-            queue_service.put_message(onboard_queue, base64.encode(json.dumps(msg_body)))
+            body_str = json.dumps(msg_body)
+
+            queue_service.put_message("onboard-queue", body_str)
 
         return func.HttpResponse(
             status_code=200,
