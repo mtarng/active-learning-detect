@@ -9,13 +9,9 @@ from urllib.request import urlopen
 from PIL import Image
 from ..shared.db_provider import get_postgres_provider
 from ..shared.db_access import ImageTagDataAccess, ImageInfo
-from azure.storage.blob import BlockBlobService
-
+from ..shared.onboarding import __get_perm_storage_service
 
 def main(msg: func.QueueMessage) -> None:
-    logging.info('Python queue trigger function processed a queue item: %s',
-                 msg.get_body().decode('utf-8'))
-
     queue_msg = json.dumps({
         'id': msg.id,
         'body': msg.get_body().decode('utf-8'),
@@ -28,26 +24,15 @@ def main(msg: func.QueueMessage) -> None:
         'pop_receipt': msg.pop_receipt,
         'dequeue_count': msg.dequeue_count
     })
-
-    logging.debug(queue_msg)
+    logging.info('Python queue trigger function processed a queue item: {0}'.format(queue_msg))
 
     try:
         msg_json = json.loads(msg.get_body().decode('utf-8'))
-        img_url = urllib.parse.quote(msg_json["imageUrl"], safe=':/')
+        img_url = urllib.parse.quote(msg_json["imageUrl"], safe=':/')  # TODO: check how this affects signed urls
         user_name = msg_json["userName"]
 
-        # TODO: move into function method and support list of urls for batch processing.
-        image_object_list = []
-        # Split original image name from URL
-        original_filename = img_url.split("/")[-1]
-        # Create ImageInfo object (def in db_access.py)
-
-        with Image.open(urlopen(img_url)) as img:
-            width, height = img.size
-
-        image = ImageInfo(original_filename, img_url, height, width)
-        # Append image object to the list
-        image_object_list.append(image)
+        # TODO: support list of urls for batch processing once we figure out retry and duplicate issues
+        image_object_list = __create_img_object_list([img_url, ])
 
         data_access = ImageTagDataAccess(get_postgres_provider())
         user_id = data_access.create_user(user_name)
@@ -58,8 +43,7 @@ def main(msg: func.QueueMessage) -> None:
         copy_destination = os.getenv('DESTINATION_CONTAINER_NAME')
 
         # Create blob service for storage account
-        blob_service = BlockBlobService(account_name=os.getenv('STORAGE_ACCOUNT_NAME'),
-                                        account_key=os.getenv('STORAGE_ACCOUNT_KEY'))
+        blob_service = __get_perm_storage_service()
 
         # Copy images to permanent storage and get a dictionary of images for which to update URLs in DB.
         # and a list of failures.  If the list of failures contains any items, return a status code other than 200.
@@ -86,3 +70,21 @@ def main(msg: func.QueueMessage) -> None:
             logging.debug("success onboarding.")
     except Exception as e:
         logging.error("Exception: " + str(e))
+
+
+def __create_img_object_list(img_url_list):
+    # TODO: support list of urls for batch processing once we figure out retry and duplicate issues
+    image_object_list = []
+
+    for img_url in img_url_list:
+        # Split original image name from URL TODO: pathlib for this
+        original_filename = img_url.split("/")[-1]
+
+        # Create ImageInfo object (def in db_access.py)
+        with Image.open(urlopen(img_url)) as img:
+            width, height = img.size
+
+        image = ImageInfo(original_filename, img_url, height, width)
+        # Append image object to the list
+        image_object_list.append(image)
+    return image_object_list

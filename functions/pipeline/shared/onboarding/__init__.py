@@ -1,5 +1,39 @@
 import os
 import logging
+import json
+
+from azure.storage.queue import QueueService, QueueMessageFormat
+from azure.storage.blob import BlockBlobService
+
+# TODO: When Azure function configuration supports, move this into an app setting
+# Double check that this matches "queueName" in onboardingqueueprocessor's function.json
+ONBOARD_QUEUE = "onboardqueue"
+
+
+def queue_image_urls_to_onboard(img_url_list, user_name):
+    queue_service = __get_onboarding_queue_service()
+
+    for image_url in img_url_list:
+        msg_body = {
+            "imageUrl": image_url,
+            "userName": user_name
+        }
+        body_str = json.dumps(msg_body)
+
+        queue_service.put_message(ONBOARD_QUEUE, body_str)
+
+
+def __get_onboarding_queue_service():
+    # Queue service for perm storage and queue
+    queue_service = QueueService(account_name=os.getenv('STORAGE_ACCOUNT_NAME'),
+                                 account_key=os.getenv('STORAGE_ACCOUNT_KEY'))
+    queue_service.encode_function = QueueMessageFormat.text_base64encode
+    return queue_service
+
+def __get_perm_storage_service():
+    return BlockBlobService(account_name=os.getenv('STORAGE_ACCOUNT_NAME'),
+                            account_key=os.getenv('STORAGE_ACCOUNT_KEY'))
+
 
 # TODO: Modify this function to return a JSON string that contains a "succeeded" list and a "failed" list.
 def copy_images_to_permanent_storage(image_id_url_map, copy_source, copy_destination, blob_service):
