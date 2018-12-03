@@ -43,7 +43,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             # TODO: create signed urls
             img_url_list.append(blob_service.make_blob_url(storage_container, blob_object.name))
 
-            queue_image_urls_to_onboard(img_url_list, user_name)
+        queue_image_urls_to_onboard(img_url_list, user_name)
 
         return func.HttpResponse(
             status_code=200,
