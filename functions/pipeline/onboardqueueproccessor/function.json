@@ -2,7 +2,7 @@
   "scriptFile": "__init__.py",
   "disabled": false,
   "bindings": [
-    {git
+    {
       "type": "queueTrigger",
       "direction": "in",
       "name": "msg",
