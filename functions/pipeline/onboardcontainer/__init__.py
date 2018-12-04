@@ -40,6 +40,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
         img_url_list = []
         for blob_object in blob_service.list_blobs(storage_container):
+            # TODO: Add check for supported image types. Put this list in a shared contants util.
             # TODO: create signed urls
             img_url_list.append(blob_service.make_blob_url(storage_container, blob_object.name))
 

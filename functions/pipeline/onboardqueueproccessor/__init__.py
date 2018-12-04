@@ -9,7 +9,7 @@ from urllib.request import urlopen
 from PIL import Image
 from ..shared.db_provider import get_postgres_provider
 from ..shared.db_access import ImageTagDataAccess, ImageInfo
-from ..shared.onboarding import __get_perm_storage_service
+from ..shared.onboarding import get_perm_storage_service
 
 def main(msg: func.QueueMessage) -> None:
     queue_msg = json.dumps({
@@ -43,7 +43,7 @@ def main(msg: func.QueueMessage) -> None:
         copy_destination = os.getenv('DESTINATION_CONTAINER_NAME')
 
         # Create blob service for storage account
-        blob_service = __get_perm_storage_service()
+        blob_service = get_perm_storage_service()
 
         # Copy images to permanent storage and get a dictionary of images for which to update URLs in DB.
         # and a list of failures.  If the list of failures contains any items, return a status code other than 200.

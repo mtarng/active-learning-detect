@@ -30,7 +30,8 @@ def __get_onboarding_queue_service():
     queue_service.encode_function = QueueMessageFormat.text_base64encode
     return queue_service
 
-def __get_perm_storage_service():
+
+def get_perm_storage_service():
     return BlockBlobService(account_name=os.getenv('STORAGE_ACCOUNT_NAME'),
                             account_key=os.getenv('STORAGE_ACCOUNT_KEY'))
 
