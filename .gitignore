@@ -121,3 +121,6 @@ tag/*.csv
 
 # VSCode
 .vscode/*.json
+
+# Function extension /bin folder
+Functions/pipeline/bin
