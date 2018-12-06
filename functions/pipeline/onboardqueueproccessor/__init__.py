@@ -1,3 +1,6 @@
+import linecache
+import sys
+
 import os
 import json
 import logging
@@ -85,4 +88,14 @@ def main(msg: func.QueueMessage) -> None:
             # content = json.dumps({"imageUrls": list(update_urls_dictionary.values())})
             logging.debug("success onboarding.")
     except Exception as e:
+
         logging.error("Exception: " + str(e))
+
+def __log_exception():
+    exc_type, exc_obj, tb = sys.exc_info()
+    f = tb.tb_frame
+    lineno = tb.tb_lineno
+    filename = f.f_code.co_filename
+    linecache.checkcache(filename)
+    line = linecache.getline(filename, lineno, f.f_globals)
+    logging.error('EXCEPTION IN ({}, LINE {} "{}"): {}'.format(filename, lineno, line.strip(), exc_obj))
