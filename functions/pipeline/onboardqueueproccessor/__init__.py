@@ -81,12 +81,15 @@ def main(msg: func.QueueMessage) -> None:
         if not blob_create_response:
             logging.error("ERROR: Image copy/delete operation failed. Check state of images in storage.")
         else:
+            # Per Azure notes https://docs.microsoft.com/en-us/azure/storage/blobs/storage-properties-metadata:
+            # The name of your metadata must conform to the naming conventions for C# identifiers. Dashes do not work.
+            # Azure blob is also setting the keys to full lowercase.
             blob_service.set_blob_metadata(container_name=copy_destination,
                                            blob_name=new_blob_name,
                                            metadata={
-                                               "user_file_path": original_file_directory,
-                                               "original_filename": original_filename,
-                                               "upload_user": user_name
+                                               "userFilePath": original_file_directory,
+                                               "originalFilename": original_filename,
+                                               "uploadUser": user_name
                                             })
 
             logging.debug("Now updating permanent URLs in the DB...")
