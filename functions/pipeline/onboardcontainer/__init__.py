@@ -71,7 +71,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             )
             # Check for supported image types here.
             if ImageFileType.is_supported_filetype(blob_url.suffix):
-                logging.info("INFO: Building sas token for blob " + blob_object.name)
+                logging.debug("INFO: Building sas token for blob " + blob_object.name)
                 # create sas signature
                 sas_signature = blob_service.generate_blob_shared_access_signature(
                     storage_container,
@@ -86,11 +86,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
                 blob_list.append(signed_url.as_uri())
 
-                logging.info("INFO: Built signed url: ".format(signed_url))
+                logging.debug("INFO: Built signed url: {}".format(signed_url))
 
                 msg_body = {
                     "imageUrl": signed_url.as_uri(),
                     "fileName": str(blob_url.name),
+                    "fileExtension": str(blob_url.suffix),
                     "directoryComponents": __get_filepath_from_url(blob_url, storage_container),
                     "userName": user_name
                 }

@@ -5,7 +5,6 @@ import os
 import json
 import logging
 import azure.functions as func
-import urllib.parse
 
 from urllib.request import urlopen
 
@@ -36,14 +35,15 @@ def main(msg: func.QueueMessage) -> None:
 
     try:
         msg_json = json.loads(msg.get_body().decode('utf-8'))
-        img_url = urllib.parse.quote(msg_json["imageUrl"], safe=':/')
-        user_name = msg_json["userName"]
 
-        # TODO: move into function method and support list of urls for batch processing.
+        img_url = msg_json['imageUrl']
+        user_name = msg_json["userName"]
+        original_filename = msg_json['fileName']
+        filetype = msg_json['fileExtension']
+        original_file_directory = msg_json['directoryComponents'] # TODO: Save this in DB.
+
+        # Only 1 object in this list for now due to single message processing.
         image_object_list = []
-        # Split original image name from URL
-        original_filename = img_url.split("/")[-1]
-        # Create ImageInfo object (def in db_access.py)
 
         with Image.open(urlopen(img_url)) as img:
             width, height = img.size
@@ -67,9 +67,8 @@ def main(msg: func.QueueMessage) -> None:
         # Copy images to permanent storage and get a dictionary of images for which to update URLs in DB.
         # and a list of failures.  If the list of failures contains any items, return a status code other than 200.
 
-        file_extension = os.path.splitext(img_url)[1]
         image_id = list(image_id_url_map.values())[0]  # TODO: Fix once we have a list of urls.
-        new_blob_name = (str(image_id) + file_extension)
+        new_blob_name = (str(image_id) + filetype)
 
         response = urlopen(img_url)
 
@@ -88,8 +87,10 @@ def main(msg: func.QueueMessage) -> None:
             # content = json.dumps({"imageUrls": list(update_urls_dictionary.values())})
             logging.debug("success onboarding.")
     except Exception as e:
-
+        __log_exception()
         logging.error("Exception: " + str(e))
+        raise e  # TODO: Handle errors and exceptions on the poison queue
+
 
 def __log_exception():
     exc_type, exc_obj, tb = sys.exc_info()
