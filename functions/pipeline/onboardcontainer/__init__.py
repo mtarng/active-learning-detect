@@ -1,6 +1,3 @@
-import linecache
-import sys
-
 import os
 import logging
 import json
@@ -107,7 +104,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             body=json.dumps(blob_list)
         )
     except Exception as e:
-        __log_exception()
         logging.error("ERROR: Could not build blob object list. Exception: " + str(e))
         return func.HttpResponse("ERROR: Could not get list of blobs in storage_container={0}. Exception={1}".format(
             storage_container, e), status_code=500)
@@ -128,13 +124,3 @@ def __remove_postfix(text, postfix):
     if not text.endswith(postfix):
         return text
     return text[:len(text)-len(postfix)]
-
-
-def __log_exception():
-    exc_type, exc_obj, tb = sys.exc_info()
-    f = tb.tb_frame
-    lineno = tb.tb_lineno
-    filename = f.f_code.co_filename
-    linecache.checkcache(filename)
-    line = linecache.getline(filename, lineno, f.f_globals)
-    logging.error('EXCEPTION IN ({}, LINE {} "{}"): {}'.format(filename, lineno, line.strip(), exc_obj))

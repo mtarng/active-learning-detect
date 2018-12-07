@@ -1,6 +1,3 @@
-import linecache
-import sys
-
 import os
 import json
 import logging
@@ -40,7 +37,7 @@ def main(msg: func.QueueMessage) -> None:
         user_name = msg_json["userName"]
         original_filename = msg_json['fileName']
         filetype = msg_json['fileExtension']
-        original_file_directory = msg_json['directoryComponents'] # TODO: Save this in DB.
+        original_file_directory = msg_json['directoryComponents']
 
         # Only 1 object in this list for now due to single message processing.
         image_object_list = []
@@ -67,7 +64,7 @@ def main(msg: func.QueueMessage) -> None:
         # Copy images to permanent storage and get a dictionary of images for which to update URLs in DB.
         # and a list of failures.  If the list of failures contains any items, return a status code other than 200.
 
-        image_id = list(image_id_url_map.values())[0]  # TODO: Fix once we have a list of urls.
+        image_id = list(image_id_url_map.values())[0]
         new_blob_name = (str(image_id) + filetype)
 
         response = urlopen(img_url)
@@ -98,16 +95,5 @@ def main(msg: func.QueueMessage) -> None:
             # content = json.dumps({"imageUrls": list(update_urls_dictionary.values())})
             logging.debug("success onboarding.")
     except Exception as e:
-        __log_exception()
         logging.error("Exception: " + str(e))
         raise e  # TODO: Handle errors and exceptions on the poison queue
-
-
-def __log_exception():
-    exc_type, exc_obj, tb = sys.exc_info()
-    f = tb.tb_frame
-    lineno = tb.tb_lineno
-    filename = f.f_code.co_filename
-    linecache.checkcache(filename)
-    line = linecache.getline(filename, lineno, f.f_globals)
-    logging.error('EXCEPTION IN ({}, LINE {} "{}"): {}'.format(filename, lineno, line.strip(), exc_obj))
