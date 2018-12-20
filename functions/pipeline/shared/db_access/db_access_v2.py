@@ -239,7 +239,7 @@ class ImageTagDataAccess(object):
                 cursor = conn.cursor()
                 query = ("SELECT imageid, tagstateid, modifieddtim "
                             "FROM image_tagging_state "
-                            "WHERE tagstateid = 2 AND modifieddtim < now() - interval '24 hour' "
+                            "WHERE tagstateid = 2 AND modifieddtim < now() - interval '3 day' "
                             "order by modifieddtim ASC;")
                 cursor.execute(query.format(ImageTagState.TAG_IN_PROGRESS))
                 for row in cursor:
