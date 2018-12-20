@@ -230,6 +230,36 @@ class ImageTagDataAccess(object):
             conn.close()
         return list(image_id_to_image_labels.values())
 
+    
+    def get_stale_images(self):
+        stale_image_ids = []
+        try:
+            conn = self._db_provider.get_connection()
+            try:
+                cursor = conn.cursor()
+                query = ("SELECT imageid, tagstateid, modifieddtim "
+                            "FROM image_tagging_state "
+                            "WHERE tagstateid = 2 AND modifieddtim < now() - interval '24 hour' "
+                            "order by modifieddtim ASC;")
+                cursor.execute(query.format(ImageTagState.TAG_IN_PROGRESS))
+                for row in cursor:
+                    logging.debug('Image Id: {0} \t\ttagstateid: {1} \t\tmodifieddtim: {2}'.format(row[0], row[1], row[2]))
+                    stale_image_ids.append(row[0])
+                for stale_image_id in stale_image_ids:
+                    logging.info('stale image id: {}'.format(stale_image_id))
+
+                chron_user_id = self.create_user('chron_job_user')
+                self._update_images(stale_image_ids,ImageTagState.INCOMPLETE_TAG, chron_user_id, conn)
+            finally:
+                cursor.close()
+        except Exception as e:
+            logging.error("An errors occured getting images: {0}".format(e))
+            raise
+        finally:
+            conn.close()
+        return stale_image_ids
+
+
     def get_existing_classifications(self):
         try:
             conn = self._db_provider.get_connection()
