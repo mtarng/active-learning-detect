@@ -253,7 +253,7 @@ class ImageTagDataAccess(object):
             finally:
                 cursor.close()
         except Exception as e:
-            logging.error("An errors occured getting images: {0}".format(e))
+            logging.error("An error occured while returning stale checkedout images to incomplete tagging state: {0}".format(e))
             raise
         finally:
             conn.close()
