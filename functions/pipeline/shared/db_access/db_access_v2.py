@@ -231,7 +231,7 @@ class ImageTagDataAccess(object):
         return list(image_id_to_image_labels.values())
 
     
-    def get_stale_images(self):
+    def reset_stale_checkedout_images(self):
         stale_image_ids = []
         try:
             conn = self._db_provider.get_connection()

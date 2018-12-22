@@ -10,15 +10,12 @@ def main(mytimer: func.TimerRequest) -> None:
     utc_timestamp = datetime.datetime.utcnow().replace(
         tzinfo=datetime.timezone.utc).isoformat()
 
-    if mytimer.past_due:
-        logging.info('The timer is past due!')
+    try:
+        data_access = ImageTagDataAccess(get_postgres_provider())
+        stale_image_ids = data_access.reset_stale_checkedout_images()
+        logging.info('Reset {} images to TAGGING_INCOMPLETE state'.format(len(stale_image_ids)))
+    except Exception as e:
+        logging.error('Error encounted while trying to reset stale image states. {}'.format(e))
+        raise
 
-    data_access = ImageTagDataAccess(get_postgres_provider())
-    # Get list of all images currently checked out, or last modified over n number of days/hours ago
-    data_access.get_stale_images()  # TODO: Rename to something else if we don't need returns.
-    # data_access.get_stale_checkedout_images() TODO:
-
-    # Set those checked out to TAGGING_INCOMPLETE ???? TODO: Or do in db_access.
-    # update_incomplete_images()
-
-    logging.info('Python timer trigger function ran at %s', utc_timestamp)
+    logging.info('Successfully ran reset function at %s', utc_timestamp)
