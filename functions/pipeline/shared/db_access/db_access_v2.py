@@ -245,9 +245,6 @@ class ImageTagDataAccess(object):
                 for row in cursor:
                     logging.debug('Image Id: {0} \t\ttagstateid: {1} \t\tmodifieddtim: {2}'.format(row[0], row[1], row[2]))
                     stale_image_ids.append(row[0])
-                for stale_image_id in stale_image_ids:
-                    logging.info('stale image id: {}'.format(stale_image_id))
-
                 chron_user_id = self.create_user('chron_job_user')
                 self._update_images(stale_image_ids,ImageTagState.INCOMPLETE_TAG, chron_user_id, conn)
             finally:
